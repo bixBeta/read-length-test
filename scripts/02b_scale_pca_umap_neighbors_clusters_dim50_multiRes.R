@@ -36,3 +36,4 @@ umap.0.8 = DimPlot(cca.obj, reduction = "umap", label = TRUE, label.size = 6, ra
 umap.0.4 + umap.0.5 + umap.0.6 + umap.0.8
 
 
+
