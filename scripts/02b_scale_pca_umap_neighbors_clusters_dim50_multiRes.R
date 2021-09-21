@@ -21,5 +21,18 @@ save(cca.obj,cca.obj.meta, file = "data/02b_scale_pca_umap_neighbors_clusters_di
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+Idents(object = cca.obj) <- "integrated_snn_res.0.4"
+umap.0.4 = DimPlot(cca.obj, reduction = "umap", label = TRUE, label.size = 6, raster = F)
+
+Idents(object = cca.obj) <- "integrated_snn_res.0.5"
+umap.0.5 = DimPlot(cca.obj, reduction = "umap", label = TRUE, label.size = 6, raster = F)
+
+Idents(object = cca.obj) <- "integrated_snn_res.0.6"
+umap.0.6 = DimPlot(cca.obj, reduction = "umap", label = TRUE, label.size = 6, raster = F)
+
+Idents(object = cca.obj) <- "integrated_snn_res.0.8"
+umap.0.8 = DimPlot(cca.obj, reduction = "umap", label = TRUE, label.size = 6, raster = F)
+
+umap.0.4 + umap.0.5 + umap.0.6 + umap.0.8
 
 
