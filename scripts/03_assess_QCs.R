@@ -67,16 +67,37 @@ ggplot(gg3.melt,
 
 dev.off()
 
+vln.feat.list = list()
+for (i in 1:26) {
+  vln.feat.list[[i]] = 
+    VlnPlot(cca.obj, features = "nFeature_RNA", split.by = "library", pt.size = 0, group.by = "orig.ident", idents = i-1)
+  
+  names(vln.feat.list)[[i]] <- paste0("cluster__",i-1)
+}
+
+wrap_plots(vln.feat.list,ncol = 1,widths = 1920, heights = 333)
+
+
+vln.count.list = list()
+for (i in 1:26) {
+  vln.count.list[[i]] = 
+    VlnPlot(cca.obj, features = "nCount_RNA", split.by = "library", pt.size = 0, group.by = "orig.ident", idents = i-1)
+  
+  names(vln.count.list)[[i]] <- paste0("cluster__",i-1)
+}
+
+wrap_plots(vln.count.list,ncol = 1,widths = 1920, heights = 333)
 
 
 
+cca.obj.meta$phenotypeID[cca.obj.meta$phenotypeID == 1] <- "control"
+cca.obj.meta$phenotypeID[cca.obj.meta$phenotypeID == 2] <- "case"
 
+cca.obj <- AddMetaData(cca.obj, metadata = cca.obj.meta$phenotypeID, col.name = "phenotype")
+cca.obj.meta = cca.obj@meta.data
 
-
-
-
-
-
+cca.obj$rlt.Condition <- paste0(cca.obj$readlength, ".", cca.obj$phenotype, ".", cca.obj$day)
+cca.obj.meta = cca.obj@meta.data
 
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -89,8 +110,26 @@ dev.off()
 
 
 
+save.image("data/sep21.Rdata")
 
+cca.obj.meta %>% 
+  ggplot(aes(x=nCount_RNA, y=nFeature_RNA, color=percent.mt)) + 
+  geom_point() + 
+  scale_colour_gradient(low = "gray90", high = "black") +
+  stat_smooth(method=lm) +
+  scale_x_log10() + 
+  scale_y_log10() + 
+  theme_classic() +
+  geom_vline(xintercept = 500) +
+  geom_hline(yintercept = 250) +
+  facet_wrap(~orig.ident)
 
+cca.obj$log10GenesPerUMI <- log10(cca.obj$nFeature_RNA) / log10(cca.obj$nCount_RNA)
+cca.obj.meta = cca.obj@meta.data
 
-
-
+# Visualize the overall complexity of the gene expression by visualizing the genes detected per UMI
+cca.obj.meta %>%
+  ggplot(aes(x=log10GenesPerUMI, color = orig.ident, fill=orig.ident)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  geom_vline(xintercept = 0.8)
