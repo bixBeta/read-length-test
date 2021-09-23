@@ -4,6 +4,8 @@
 
 source("scripts/packages.R")
 
+DefaultAssay(cca.obj) <- "RNA"
+
 long.v.short = list()
 for (i in 1:length(levels(Idents(cca.obj)))) {
   long.v.short[[i]] <- FindMarkers(cca.obj, ident.1 = "long", 
@@ -77,16 +79,34 @@ dev.off()
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-long.v.short = list()
+long.case.D1.v.long.control.D1 = list()
+
 for (i in 1:length(levels(Idents(cca.obj)))) {
-  long.v.short[[i]] <- FindMarkers(cca.obj, ident.1 = "long", 
-                                   ident.2 = "short", group.by = "readlength",
+  long.case.D1.v.long.control.D1[[i]] <- FindMarkers(cca.obj, ident.1 = "long.case.D1", 
+                                   ident.2 = "long.control.D1", group.by = "rlt.Condition",
                                    subset.ident = levels(Idents(cca.obj))[i], 
                                    only.pos = F, logfc.threshold = 0.1)
   
-  names(long.v.short)[[i]] <- paste0("CLUSTER__", levels(Idents(cca.obj))[i])
+  names(long.case.D1.v.long.control.D1)[[i]] <- paste0("CLUSTER__", levels(Idents(cca.obj))[i])
   
 }
 
+
+
+short.case.D1.v.short.control.D1 = list()
+
+for (i in 1:length(levels(Idents(cca.obj)))) {
+  short.case.D1.v.short.control.D1[[i]] <- FindMarkers(cca.obj, ident.1 = "short.case.D1", 
+                                                     ident.2 = "short.control.D1", group.by = "rlt.Condition",
+                                                     subset.ident = levels(Idents(cca.obj))[i], 
+                                                     only.pos = F, logfc.threshold = 0.1)
+  
+  names(short.case.D1.v.short.control.D1)[[i]] <- paste0("CLUSTER__", levels(Idents(cca.obj))[i])
+  
+}
+
+DefaultAssay(cca.obj) <- "RNA"
+cca.obj = FindVariableFeatures(cca.obj, selection.method = "vst", nfeatures = 2000)
+top100 <- head(VariableFeatures(cca.obj), 100)
 
 
