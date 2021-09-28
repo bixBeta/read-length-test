@@ -46,12 +46,12 @@ DimPlot(cca.obj, reduction = "umap", label = TRUE, label.size = 6, raster = F, s
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # get number of cells per cluster per sample
-n_cells.cca.obj <- FetchData(cca.obj, 
+n_cells_per_cluster_per_sample <- FetchData(cca.obj, 
                              vars = c("ident", "orig.ident")) %>%
   dplyr::count(ident, orig.ident) %>%
   tidyr::spread(ident, n)
 
-write.csv(n_cells.cca.obj, "results__splitByBatch__noFilter/n_cells_per_cluster_per_sample.csv")
+write.csv(n_cells_per_cluster_per_sample, "results__splitByBatch__noFilter/n_cells_per_cluster_per_sample.csv")
 
 
 rownames(n_cells_per_cluster_per_sample) <- n_cells_per_cluster_per_sample$orig.ident
@@ -64,10 +64,10 @@ n_cells.matrix$sample = n_cells_per_cluster_per_sample$orig.ident
 
 n_cells.matrix.joined = left_join(n_cells.matrix, cca.obj.meta, by = c("sample" = "orig.ident")) 
 
-gg3.join = n_cells.matrix.joined %>% select(1:26,batchID, batch.readlen, sample, library)
+gg3.join = n_cells.matrix.joined %>% select(1:30,batchID, batch.readlen, sample, library, sex)
 gg3.melt = reshape2::melt(gg3.join)
 
-colnames(gg3.melt) <- c("batchID", "batch.ReadLen", "sample", "library", "cluster.0.6", "value")
+colnames(gg3.melt) <- c("batchID", "batch.ReadLen", "sample", "library", "sex", "cluster.0.6", "value")
 
 png("figures__splitByBatch__noFilter/distibution_of_cells_per_cluster_per_sample_per_cluster.png", width = 4000, height = 10000, res = 200)
 
@@ -80,7 +80,46 @@ ggplot(gg3.melt,
 
 
 dev.off()
+
+png("figures__splitByBatch__noFilter/SEX__distibution_of_cells_per_cluster_per_sample_per_cluster.png", width = 4000, height = 10000, res = 200)
+
+
+ggplot(gg3.melt,
+       aes(fill=batch.ReadLen, y=value, x=sample, label = batchID)) + 
+  geom_bar(position="dodge", stat="identity") + theme(legend.position = "none", 
+                                                      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + scale_fill_viridis(discrete = T) +
+  facet_grid(cluster.0.6 ~ sex , scales = "free") + theme(axis.line=element_line())
+
+
+dev.off()
+
+
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+# extract pseudoCounts
+sce <- as.SingleCellExperiment(cca.obj)
+assays(sce)
+
+groups <- colData(sce)[, c("seurat_clusters", "orig.ident")]
+pb <- aggregate.Matrix(t(counts(sce)), 
+                       groupings = groups, fun = "sum") 
+
+splitf <- sapply(stringr::str_split(rownames(pb), 
+                                    pattern = "_",  
+                                    n = 2),`[`, 1)
+
+pb <- split.data.frame(pb, 
+                       factor(splitf)) %>%
+  lapply(function(u) 
+    set_colnames(t(u), 
+                 stringr::str_extract(rownames(u), "(?<=_)[:alnum:]+")))
+
+pb.matrix = lapply(pb, function(x){as.matrix(x)})
+
+save(pb,pb.matrix, file = "data__splitByBatch__noFilter/PseudoBulk_Counts.Rdata")
+save.image(file = "data__splitByBatch__noFilter/noFilter__splitByBatch__SOBJ__scripts.Rdata")
+
+
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
